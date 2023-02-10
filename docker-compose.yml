@@ -3,11 +3,15 @@ version: "3.9"
 services:
   drone:
     image: drone/drone:2
-    ports:
-      - ${PORT}:80
-    volumes:
-      - /var/lib/drone:/data
+
+    container_name: drone
+
     restart: always
+
+    # Remove the exposed ports if using network bridge with reverse proxy
+    ports:
+      - 80:80
+
     environment:
       - DRONE_GITHUB_CLIENT_ID
       - DRONE_GITHUB_CLIENT_SECRET
@@ -18,11 +22,14 @@ services:
       - DRONE_USER_FILTER
       - DRONE_USER_CREATE
 
+    volumes:
+      - drone_data:/data
+
   runner:
     image: drone/drone-runner-docker:1
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+
     restart: always
+
     environment:
       - DRONE_RPC_HOST
       - DRONE_RPC_PROTO
@@ -30,5 +37,17 @@ services:
       - DRONE_RUNNER_CAPACITY
       - DRONE_RUNNER_NAME
 
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
     depends_on:
       - drone
+
+volumes:
+  drone_data:
+
+# Use this for exposing drone indirectly through a reverse proxy
+# networks:
+#   default:
+#     name: ${NETWORK_NAME}
+#     external: true
